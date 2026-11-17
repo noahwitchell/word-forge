@@ -43,7 +43,8 @@ data = {'common': ' '.join(common), 'extra': ' '.join(extra), 'seeds': ' '.join(
 head = open('src/head.html', encoding='utf-8').read()
 js = open('src/app.js', encoding='utf-8').read().replace('/*@DATA@*/null', json.dumps(data, separators=(',', ':')))
 out0 = head + '\n<script>\n' + js + '\n</script>\n'
-build = hashlib.sha1(out0.encode()).hexdigest()[:7]
+icons = b''.join(open('docs/' + f, 'rb').read() for f in ('icon-192.png', 'icon-512.png', 'apple-touch-icon.png') if os.path.exists('docs/' + f))
+build = hashlib.sha1(out0.encode() + icons).hexdigest()[:7]   # icon changes also bump the offline cache
 out = out0.replace('__BUILD__', build)
 open('app.html', 'w', encoding='utf-8').write(out)
 open('_test.html', 'w', encoding='utf-8').write('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n' + out)
