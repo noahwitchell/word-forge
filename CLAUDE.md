@@ -6,4 +6,4 @@
 - Words: `_lists/enable1.txt` (ENABLE, everything accepted, 3–7 letters) and `_lists/en_50k.txt` (OpenSubtitles frequency; top 35k ∩ ENABLE = bank). Puzzles = 7-letter seed words (top 22k) with a 14–70 word bank, deduped by anagram, fixed shuffle (seed 7) so puzzle #n is stable. Changing lists or thresholds renumbers puzzles and invalidates saved games (boot checks the saved letters still match).
 - No repeats: every started puzzle goes in S.seen and is skipped until all are used (then a new round). Variety: a new pick shares ≤5 of 7 letters with the last 25. Daily = picked fresh once per day, stored in S.daily. Points 3→1, 4→2, 5→4, 6→7, 7→12; ranks by % of bank points. State in localStorage `wordhoard-v1`.
 - Testing: serve with `python3 -m http.server 8792` and open `_test.html`; drive with keydown events (letters, Enter, Backspace, space = shuffle).
-- Not yet on GitHub Pages (same setup as Go Dojo would work: public repo, Pages from main, serve docs/).
+- Live: https://noahwitchell.github.io/word-forge/ (public repo noahwitchell/word-forge, Pages from main /docs, push = deploy; build.py bumps the sw.js CACHE automatically). _lists/ is gitignored.
