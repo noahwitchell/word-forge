@@ -67,6 +67,9 @@ h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
 .w s{width:16px;height:21px;border-radius:4px;background:var(--line);display:grid;place-items:center;text-decoration:none;font:700 13px/1 var(--sans);text-transform:uppercase;color:var(--ink)}
 .w.got s{background:var(--gold-soft)}
 .w.got.all s{background:var(--gold)}
+.w s.h{background:var(--card);box-shadow:inset 0 0 0 1.5px var(--gold);color:var(--soft)}
+.w.tap{cursor:pointer;border-radius:6px;outline:1.5px dashed var(--gold);outline-offset:3px}
+.w.tap:active{transform:scale(.95)}
 .w.miss s{background:var(--red-soft);color:var(--accent)}
 .w.new{animation:pop .5s ease-out}
 @keyframes pop{0%{transform:scale(.6);opacity:.2}60%{transform:scale(1.12)}100%{transform:none}}
@@ -90,7 +93,9 @@ h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
 .tile:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
 .tile.used{transform:translateY(5px);box-shadow:0 0 0 var(--ink);background:var(--line);color:var(--faint);border-color:var(--faint)}
 .tile:disabled{cursor:default}
-.acts{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px}
+.acts{display:grid;grid-template-columns:54px 1fr 54px 1.15fr;gap:8px}
+.btn.sq{padding:0}
+.btn.on{background:var(--gold);border-color:var(--ink)}
 .btn{min-height:48px;border-radius:999px;border:1.5px solid var(--ink);background:none;font:700 16px var(--sans);display:flex;align-items:center;justify-content:center;gap:7px;padding:0 14px}
 .btn svg{width:19px;height:19px}
 .btn.ink{background:var(--ink);color:var(--paper)}
@@ -196,6 +201,7 @@ function nextGame() {
 let G = null;          // derived: bank words, totals
 let typed = [];        // tile indexes in the current word
 let msg = null, msgTimer = 0, fresh = null, sheet = null, confirmFinish = false;
+let hinting = false;   // hint mode: the next tap on an unfound word reveals its next letter
 
 function setup() {
   const c = S.cur, pool = count(c.letters);
@@ -212,6 +218,7 @@ function shake() { const e = $app.querySelector('.entry'); if (!e) return; e.cla
 
 function tap(i) {
   if (S.cur.done || typed.includes(i)) return;
+  if (hinting) { hinting = false; render(); }
   msg = null; typed.push(i); renderDock();
 }
 function back() { typed.pop(); msg = null; renderDock(); }
@@ -235,6 +242,21 @@ function enter() {
   if (EXTRA.has(w)) { c.bonus.push(w); save(); render(); return say('Bonus word. Real, but rare', 'soft', 1600); }
   renderDock(); shake(); say('Not in the word list', 'soft');
 }
+// ---------- hints ----------
+// Tap Hint, then tap any unfound word: its next letter (left to right) shows in the slot. The last letter is never given away.
+const hintsOf = w => (S.cur.hints && S.cur.hints[w]) || 0;
+function toggleHint() {
+  if (S.cur.done) return;
+  hinting = !hinting; typed = []; msg = null; render();
+  if (hinting) { const el = $app.querySelector('.w.tap'); if (el) el.scrollIntoView({block: 'nearest', behavior: 'smooth'}); }
+}
+function reveal(w) {
+  const c = S.cur, n = hintsOf(w);
+  if (n >= w.length - 1) { say('Only the last letter is left. You can do it', 'soft', 1800); return; }
+  c.hints = c.hints || {}; c.hints[w] = n + 1; c.hintCount = (c.hintCount || 0) + 1;
+  hinting = false; fresh = null; save(); render();
+  const el = $app.querySelector(`.w[data-w="${w}"]`); if (el) { el.classList.add('new'); el.scrollIntoView({block: 'nearest', behavior: 'smooth'}); }
+}
 function typeLetter(ch) {
   const c = S.cur; if (c.done) return;
   for (let i = 0; i < c.letters.length; i++) if (c.letters[i] === ch && !typed.includes(i)) return tap(i);
@@ -244,7 +266,8 @@ function finish() {
   const c = S.cur; if (c.done) return;
   c.done = true; confirmFinish = false;
   const pct = Math.round(100 * points() / G.total);
-  S.stats.played++; S.stats.sumPct += pct; if (pct === 100) S.stats.perfect++;
+  S.stats.played++; S.stats.sumPct += pct; if (pct === 100 && !c.hintCount) S.stats.perfect++;   // perfect = every word, no hints
+  hinting = false;
   if (c.daily !== null) { S.stats.streak = S.stats.lastDaily === c.daily - 1 ? S.stats.streak + 1 : 1; S.stats.lastDaily = c.daily; }
   S.done[c.idx] = Math.max(pct, S.done[c.idx] || 0);
   save(); sheet = 'result'; render();
@@ -270,6 +293,7 @@ function paintClock(el) {
 const ICON = {
   menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11v14H9l-6-7z"/><path d="M12.5 9.5l5 5m0-5l-5 5"/></svg>',
+  hint: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>',
   shuf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3c5 0 7 10 12 10h3M3 17h3c2 0 3.3-1.6 4.5-3.6M21 7h-3c-2 0-3.3 1.6-4.5 3.6"/><path d="M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>',
 };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -298,24 +322,25 @@ function render() {
   <div class="dock"></div>
   ${sheet ? '<div class="veil" id="veil"><div class="sheet" role="dialog" aria-modal="true">' + sheetHTML() + '</div></div>' : ''}`;
   const clock = $app.querySelector('.clock'); if (clock) paintClock(clock);
-  $app.querySelector('#menu').onclick = () => { sheet = 'menu'; confirmFinish = false; render(); };
+  $app.querySelector('#menu').onclick = () => { sheet = 'menu'; confirmFinish = false; hinting = false; render(); };
+  $app.querySelector('#bank').onclick = e => { const t = hinting && e.target.closest('.w.tap'); if (t) reveal(t.dataset.w); };
   if (sheet) wireSheet();
   renderDock();
   fresh = null;
 }
 
 function bankHTML() {
-  const c = S.cur, found = new Set(c.found), mode = c.done ? 'slots' : S.settings.bank;
+  const c = S.cur, found = new Set(c.found), mode = c.done || hinting ? 'slots' : S.settings.bank;
   let h = '';
   for (let n = 7; n >= 3; n--) {
     const ws = G.bank.filter(w => w.length === n);
     if (!ws.length) continue;
     const got = ws.filter(w => found.has(w)).length;
-    const shown = mode === 'slots' ? ws : ws.filter(w => found.has(w));
-    const cells = w => [...w].map(ch => `<s>${found.has(w) || c.done ? ch : ''}</s>`).join('');
-    const cls = w => 'w' + (found.has(w) ? ' got' + (n === 7 ? ' all' : '') : c.done ? ' miss' : '') + (w === fresh ? ' new' : '');
+    const shown = mode === 'slots' ? ws : ws.filter(w => found.has(w) || hintsOf(w));
+    const cells = w => [...w].map((ch, j) => found.has(w) || c.done ? `<s>${ch}</s>` : j < hintsOf(w) ? `<s class="h">${ch}</s>` : '<s></s>').join('');
+    const cls = w => 'w' + (found.has(w) ? ' got' + (n === 7 ? ' all' : '') : c.done ? ' miss' : '') + (w === fresh ? ' new' : '') + (hinting && !found.has(w) ? ' tap' : '');
     h += `<div class="grp"><h3>${n} letters <em>${got} / ${ws.length}</em></h3>
-      ${shown.length ? `<div class="words">${shown.map(w => `<span class="${cls(w)}" aria-label="${found.has(w) || c.done ? w : n + ' letter word'}">${cells(w)}</span>`).join('')}</div>` : '<p class="countnote">None yet</p>'}</div>`;
+      ${shown.length ? `<div class="words">${shown.map(w => `<span class="${cls(w)}" data-w="${w}"${hinting && !found.has(w) ? ' role="button" tabindex="0"' : ''} aria-label="${found.has(w) || c.done ? w : n + ' letter word'}">${cells(w)}</span>`).join('')}</div>` : '<p class="countnote">None yet</p>'}</div>`;
   }
   if (c.bonus.length) h += `<div class="grp"><h3>Bonus words <em>${c.bonus.length}</em></h3><p class="bonus">${c.bonus.map(w => `<b>${w}</b>`).join(' · ')}</p></div>`;
   return h;
@@ -325,6 +350,7 @@ function renderEntry() {
   const e = $app.querySelector('.entry'); if (!e) return;
   const c = S.cur;
   if (msg && !typed.length) e.innerHTML = `<span class="msg ${msg.kind || ''}">${esc(msg.text)}</span>`;
+  else if (hinting) e.innerHTML = '<span class="msg gold">Tap a word to see its next letter</span>';
   else if (c.done) e.innerHTML = `<span class="msg soft">${c.found.length === G.bank.length ? 'Every word found' : 'Missed words are in red'}</span>`;
   else e.innerHTML = esc(typed.map(i => c.letters[i]).join('')) + '<span class="caret"></span>';
 }
@@ -335,11 +361,11 @@ function renderDock() {
     <div class="tiles">${[...c.letters].map((ch, i) => `<button class="tile${typed.includes(i) ? ' used' : ''}" data-i="${i}" ${c.done ? 'disabled' : ''} aria-label="${ch}">${ch}</button>`).join('')}</div>
     <div class="acts">${c.done
       ? '<button class="btn ink wide" id="next">Next puzzle</button>'
-      : `<button class="btn" id="del" aria-label="Delete letter">${ICON.back}</button><button class="btn" id="shuf">${ICON.shuf}Shuffle</button><button class="btn ink" id="ent">Enter</button>`}</div>`;
+      : `<button class="btn sq" id="del" aria-label="Delete letter">${ICON.back}</button><button class="btn${hinting ? ' on' : ''}" id="hint" aria-pressed="${hinting}">${ICON.hint}${hinting ? 'Cancel' : 'Hint'}</button><button class="btn sq" id="shuf" aria-label="Shuffle letters">${ICON.shuf}</button><button class="btn ink" id="ent">Enter</button>`}</div>`;
   renderEntry();
   d.querySelectorAll('.tile').forEach(b => b.onclick = () => tap(+b.dataset.i));
   const on = (id, f) => { const b = d.querySelector('#' + id); if (b) b.onclick = f; };
-  on('del', back); on('shuf', doShuffle); on('ent', enter); on('next', nextGame);
+  on('del', back); on('shuf', doShuffle); on('hint', toggleHint); on('ent', enter); on('next', nextGame);
 }
 
 function seg(name, value, opts) {
@@ -352,7 +378,7 @@ function sheetHTML() {
     const longest = c.found.slice().sort((a, b) => b.length - a.length)[0];
     return `<h2>${rankOf(p / G.total)}</h2>
       <div class="big"><b>${c.found.length}</b><span>of ${G.bank.length} words · ${p} of ${G.total} points (${pct}%)</span></div>
-      <p class="lead" style="margin:0">${longest ? 'Longest: <b>' + longest.toUpperCase() + '</b>. ' : ''}${c.bonus.length ? c.bonus.length + ' bonus word' + (c.bonus.length > 1 ? 's' : '') + '. ' : ''}${pct < 100 ? 'The words you missed are shown in red.' : ''}</p>
+      <p class="lead" style="margin:0">${longest ? 'Longest: <b>' + longest.toUpperCase() + '</b>. ' : ''}${c.bonus.length ? c.bonus.length + ' bonus word' + (c.bonus.length > 1 ? 's' : '') + '. ' : ''}${c.hintCount ? c.hintCount + ' hint' + (c.hintCount > 1 ? 's' : '') + ' used. ' : ''}${pct < 100 ? 'The words you missed are shown in red.' : ''}</p>
       <div class="col"><button class="btn ink" id="s-next">Next puzzle</button><button class="btn" id="s-close">See the full bank</button></div>`;
   }
   const todayDone = st.lastDaily === dayNum();
@@ -374,7 +400,7 @@ function sheetHTML() {
       <div class="stat"><b>${st.perfect}</b><span>Perfect</span></div>
       <div class="stat"><b>${st.lastDaily !== null && st.lastDaily >= dayNum() - 1 ? st.streak : 0}</b><span>Daily streak</span></div></div></div>
     <button class="btn" id="s-close">Back to the puzzle</button>
-    <p class="ver">${SEEDS.length} puzzles · build c12b8c6</p>`;
+    <p class="ver">${SEEDS.length} puzzles · build 87f63ad</p>`;
 }
 function wireSheet() {
   const v = $app.querySelector('#veil');
@@ -395,6 +421,7 @@ function wireSheet() {
 addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (sheet) { if (e.key === 'Escape') { sheet = null; render(); } return; }
+  if (hinting && e.key === 'Escape') { toggleHint(); return; }
   const k = e.key.toLowerCase();
   if (/^[a-z]$/.test(k)) { typeLetter(k); e.preventDefault(); }
   else if (e.key === 'Backspace') { back(); e.preventDefault(); }

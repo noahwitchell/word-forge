@@ -7,3 +7,4 @@
 - No repeats: every started puzzle goes in S.seen and is skipped until all are used (then a new round). Variety: a new pick shares ≤5 of 7 letters with the last 25. Daily = picked fresh once per day, stored in S.daily. Points 3→1, 4→2, 5→4, 6→7, 7→12; ranks by % of bank points. State in localStorage `wordhoard-v1`.
 - Testing: serve with `python3 -m http.server 8792` and open `_test.html`; drive with keydown events (letters, Enter, Backspace, space = shuffle).
 - Live: https://noahwitchell.github.io/word-forge/ (public repo noahwitchell/word-forge, Pages from main /docs, push = deploy; build.py bumps the sw.js CACHE automatically). _lists/ is gitignored.
+- Hints: Hint button (dock, between Delete and Shuffle) enters hint mode; tapping an unfound word reveals its next letter left to right (S.cur.hints[word] = count, S.cur.hintCount total); never the last letter. Hinted words show in Count only mode; results list hints used; "Perfect" stat only counts hint-free games.
