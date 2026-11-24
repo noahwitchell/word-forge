@@ -8,3 +8,7 @@
 - Testing: serve with `python3 -m http.server 8792` and open `_test.html`; drive with keydown events (letters, Enter, Backspace, space = shuffle).
 - Live: https://noahwitchell.github.io/word-forge/ (public repo noahwitchell/word-forge, Pages from main /docs, push = deploy; build.py bumps the sw.js CACHE automatically). _lists/ is gitignored.
 - Hints: Hint button (dock, between Delete and Shuffle) enters hint mode; tapping an unfound word reveals its next letter left to right (S.cur.hints[word] = count, S.cur.hintCount total); never the last letter. Hinted words show in Count only mode; results list hints used; "Perfect" stat only counts hint-free games.
+
+## Dark mode
+- Sun/moon button in the header (left of the menu). Until tapped, follows the phone's light/dark setting; after that `S.settings.theme` ('light'|'dark') sticks.
+- Dark palette lives in `:root[data-theme="dark"]` in head.html (warm charcoal, ink becomes cream). Text sitting on gold uses `--on-gold` (always dark) so it stays readable in both themes. `applyTheme()` also updates the theme-color meta.
