@@ -25,6 +25,21 @@ function load() {
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
+// ---------- theme ----------
+// Follows the phone's light/dark setting until you tap the sun/moon button; after that your choice sticks.
+const SYS_DARK = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => S.settings.theme ? S.settings.theme === 'dark' : SYS_DARK.matches;
+function applyTheme() {
+  const dark = isDark();
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  let m = document.querySelector('meta[name="theme-color"]');
+  if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); }
+  m.content = dark ? '#1a1c1e' : '#f6f1e8';
+}
+function toggleTheme() { S.settings.theme = isDark() ? 'light' : 'dark'; save(); applyTheme(); render(); }
+SYS_DARK.addEventListener && SYS_DARK.addEventListener('change', () => { if (!S.settings.theme) { applyTheme(); render(); } });
+applyTheme();
+
 // ---------- puzzles ----------
 const count = w => { const m = {}; for (const c of w) m[c] = (m[c] || 0) + 1; return m; };
 function fits(word, pool) { const m = count(word); for (const c in m) if ((pool[c] || 0) < m[c]) return false; return true; }
@@ -155,6 +170,8 @@ function paintClock(el) {
 
 // ---------- render ----------
 const ICON = {
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
   menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11v14H9l-6-7z"/><path d="M12.5 9.5l5 5m0-5l-5 5"/></svg>',
   hint: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>',
@@ -174,7 +191,7 @@ function render() {
   <div class="sky">
     <span class="sub">${esc(label())}</span>
     <h1>Word Forge</h1>
-    <div class="right"><button class="icon" id="menu" aria-label="Menu">${ICON.menu}</button></div>
+    <div class="right"><button class="icon" id="theme" aria-label="${isDark() ? 'Light mode' : 'Dark mode'}">${isDark() ? ICON.sun : ICON.moon}</button><button class="icon" id="menu" aria-label="Menu">${ICON.menu}</button></div>
   </div>
   <div class="score">
     <div class="row1"><span class="rank">${rankOf(pct)}</span>
@@ -186,6 +203,7 @@ function render() {
   <div class="dock"></div>
   ${sheet ? '<div class="veil" id="veil"><div class="sheet" role="dialog" aria-modal="true">' + sheetHTML() + '</div></div>' : ''}`;
   const clock = $app.querySelector('.clock'); if (clock) paintClock(clock);
+  $app.querySelector('#theme').onclick = toggleTheme;
   $app.querySelector('#menu').onclick = () => { sheet = 'menu'; confirmFinish = false; hinting = false; render(); };
   $app.querySelector('#bank').onclick = e => { const t = hinting && e.target.closest('.w.tap'); if (t) reveal(t.dataset.w); };
   if (sheet) wireSheet();

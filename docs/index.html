@@ -18,18 +18,25 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap">
 <style>
 /* House style shared with Coffea Arabica and Go Dojo: flat paper + ink, DM Serif Display, 1.5px ink outlines, pill buttons,
-   no gradients, shadows or blur, light only. Layout: a locked one-screen shell. Header + score, the word bank (scrolls inside its card),
+   no gradients, shadows or blur. Light by default, with a warm charcoal dark theme (sun/moon button in the header). Layout: a locked one-screen shell. Header + score, the word bank (scrolls inside its card),
    then a fixed dock: current word, seven letter tiles (flat solid top + offset solid side face), three actions. */
 :root{
   --paper:#f6f1e8; --card:#fffdf8; --line:#e4dccd; --ink:#1f2427; --soft:#6c6a64; --faint:#a7a197;
   --accent:#e2573f; --gold:#efb43f; --gold-soft:#fbeccb; --red-soft:#f9e0d9; --green:#4f8a5b; --green-soft:#e3eedf;
   --serif:"DM Serif Display",Georgia,serif;
   --sans:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",system-ui,sans-serif;
+  --on-gold:#1f2427; --veil:rgba(31,36,39,.38);
   color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --paper:#1a1c1e; --card:#232629; --line:#363a3e; --ink:#ece5d8; --soft:#a8a296; --faint:#6f6b64;
+  --accent:#f06b52; --gold:#efb43f; --gold-soft:#4d3f22; --red-soft:#4a2820; --green:#7fb88a; --green-soft:#26362a;
+  --veil:rgba(0,0,0,.55);
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
-body{position:fixed;inset:0;background:var(--paper);color:var(--ink);font:15px/1.4 var(--sans);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+body{transition:background .2s;position:fixed;inset:0;background:var(--paper);color:var(--ink);font:15px/1.4 var(--sans);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 #app{position:absolute;inset:0;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
   padding-top:max(4px,env(safe-area-inset-top,0px));padding-bottom:max(12px,env(safe-area-inset-bottom,0px));
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -41,7 +48,7 @@ h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
 .sky{flex:none;display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;height:60px;border-bottom:1px solid var(--line)}
 .sky h1{text-align:center;font:30px/1 var(--serif);letter-spacing:-.01em;white-space:nowrap}
 .sky .sub{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sky .right{display:flex;justify-content:flex-end}
+.sky .right{display:flex;justify-content:flex-end;gap:6px}
 .icon{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--ink);background:none;color:var(--ink);display:grid;place-items:center;padding:0}
 .icon svg{width:17px;height:17px}
 
@@ -66,7 +73,7 @@ h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
 .w{display:flex;gap:2px}
 .w s{width:16px;height:21px;border-radius:4px;background:var(--line);display:grid;place-items:center;text-decoration:none;font:700 13px/1 var(--sans);text-transform:uppercase;color:var(--ink)}
 .w.got s{background:var(--gold-soft)}
-.w.got.all s{background:var(--gold)}
+.w.got.all s{background:var(--gold);color:var(--on-gold)}
 .w s.h{background:var(--card);box-shadow:inset 0 0 0 1.5px var(--gold);color:var(--soft)}
 .w.tap{cursor:pointer;border-radius:6px;outline:1.5px dashed var(--gold);outline-offset:3px}
 .w.tap:active{transform:scale(.95)}
@@ -83,7 +90,7 @@ h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
 .entry .caret{width:2px;height:32px;background:var(--ink);margin-left:3px;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 .entry .msg{font:700 14px/1.2 var(--sans);letter-spacing:0;text-transform:none;padding:8px 14px;border-radius:999px;background:var(--ink);color:var(--paper)}
-.entry .msg.gold{background:var(--gold);color:var(--ink)}
+.entry .msg.gold{background:var(--gold);color:var(--on-gold)}
 .entry .msg.soft{background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
 .entry.shake{animation:shake .3s}
 @keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
@@ -95,14 +102,14 @@ h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
 .tile:disabled{cursor:default}
 .acts{display:grid;grid-template-columns:54px 1fr 54px 1.15fr;gap:8px}
 .btn.sq{padding:0}
-.btn.on{background:var(--gold);border-color:var(--ink)}
+.btn.on{background:var(--gold);border-color:var(--gold);color:var(--on-gold)}
 .btn{min-height:48px;border-radius:999px;border:1.5px solid var(--ink);background:none;font:700 16px var(--sans);display:flex;align-items:center;justify-content:center;gap:7px;padding:0 14px}
 .btn svg{width:19px;height:19px}
 .btn.ink{background:var(--ink);color:var(--paper)}
 .btn.wide{grid-column:1/-1}
 
 /* sheets */
-.veil{position:absolute;inset:0;background:rgba(31,36,39,.38);display:flex;align-items:flex-end;z-index:5;animation:fade .18s}
+.veil{position:absolute;inset:0;background:var(--veil);display:flex;align-items:flex-end;z-index:5;animation:fade .18s}
 .sheet{width:100%;max-height:88%;overflow-y:auto;background:var(--paper);border-radius:20px 20px 0 0;border-top:1.5px solid var(--ink);display:flex;flex-direction:column;gap:18px;
   padding:22px max(18px,env(safe-area-inset-left,0px)) max(22px,env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-right,0px));animation:rise .22s ease-out}
 @keyframes fade{from{opacity:0}} @keyframes rise{from{transform:translateY(30px);opacity:.4}}
@@ -160,6 +167,21 @@ function load() {
   return s;
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- theme ----------
+// Follows the phone's light/dark setting until you tap the sun/moon button; after that your choice sticks.
+const SYS_DARK = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => S.settings.theme ? S.settings.theme === 'dark' : SYS_DARK.matches;
+function applyTheme() {
+  const dark = isDark();
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  let m = document.querySelector('meta[name="theme-color"]');
+  if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); }
+  m.content = dark ? '#1a1c1e' : '#f6f1e8';
+}
+function toggleTheme() { S.settings.theme = isDark() ? 'light' : 'dark'; save(); applyTheme(); render(); }
+SYS_DARK.addEventListener && SYS_DARK.addEventListener('change', () => { if (!S.settings.theme) { applyTheme(); render(); } });
+applyTheme();
 
 // ---------- puzzles ----------
 const count = w => { const m = {}; for (const c of w) m[c] = (m[c] || 0) + 1; return m; };
@@ -291,6 +313,8 @@ function paintClock(el) {
 
 // ---------- render ----------
 const ICON = {
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
   menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11v14H9l-6-7z"/><path d="M12.5 9.5l5 5m0-5l-5 5"/></svg>',
   hint: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>',
@@ -310,7 +334,7 @@ function render() {
   <div class="sky">
     <span class="sub">${esc(label())}</span>
     <h1>Word Forge</h1>
-    <div class="right"><button class="icon" id="menu" aria-label="Menu">${ICON.menu}</button></div>
+    <div class="right"><button class="icon" id="theme" aria-label="${isDark() ? 'Light mode' : 'Dark mode'}">${isDark() ? ICON.sun : ICON.moon}</button><button class="icon" id="menu" aria-label="Menu">${ICON.menu}</button></div>
   </div>
   <div class="score">
     <div class="row1"><span class="rank">${rankOf(pct)}</span>
@@ -322,6 +346,7 @@ function render() {
   <div class="dock"></div>
   ${sheet ? '<div class="veil" id="veil"><div class="sheet" role="dialog" aria-modal="true">' + sheetHTML() + '</div></div>' : ''}`;
   const clock = $app.querySelector('.clock'); if (clock) paintClock(clock);
+  $app.querySelector('#theme').onclick = toggleTheme;
   $app.querySelector('#menu').onclick = () => { sheet = 'menu'; confirmFinish = false; hinting = false; render(); };
   $app.querySelector('#bank').onclick = e => { const t = hinting && e.target.closest('.w.tap'); if (t) reveal(t.dataset.w); };
   if (sheet) wireSheet();
@@ -400,7 +425,7 @@ function sheetHTML() {
       <div class="stat"><b>${st.perfect}</b><span>Perfect</span></div>
       <div class="stat"><b>${st.lastDaily !== null && st.lastDaily >= dayNum() - 1 ? st.streak : 0}</b><span>Daily streak</span></div></div></div>
     <button class="btn" id="s-close">Back to the puzzle</button>
-    <p class="ver">${SEEDS.length} puzzles · build 87f63ad</p>`;
+    <p class="ver">${SEEDS.length} puzzles · build 2ad33e5</p>`;
 }
 function wireSheet() {
   const v = $app.querySelector('#veil');
